@@ -100,8 +100,18 @@ async function main(): Promise<void> {
   installPlatformSessionPublisher(ctx, (session) => {
     if (process.connected) process.send?.({ type: 'platform-session', session })
   })
-  const url = ctx.connection.authenticatedUrl(`${ctx.webServer.protocol}//127.0.0.1:${String(ctx.webServer.port)}`)
-  if (process.connected) process.send?.({ type: 'ready', url, injections: ctx.webServer.collectIndexInjections() }, (error) => { if (error !== null) console.error(error) })
+  ctx.inject(['connection', 'webServer'], (readyCtx) => {
+    const url = readyCtx.connection.authenticatedUrl(`${readyCtx.webServer.protocol}//127.0.0.1:${String(readyCtx.webServer.port)}`)
+    if (process.connected) {
+        process.send?.({ 
+            type: 'ready', 
+            url, 
+            injections: readyCtx.webServer.collectIndexInjections() 
+        }, (error) => {
+            if (error !== null) console.error(error)
+        })
+    }
+})
 }
 
 /** Upper bound of the startup diagnostic carried over IPC; the head holds the message and stack. */
